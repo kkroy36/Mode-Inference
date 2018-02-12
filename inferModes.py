@@ -107,8 +107,8 @@ class Data:
         """
         Input a string of the format:
            'father(harrypotter,jamespotter).'
-        Returns a list where [0] is the head of the clause and [1] is a list of items
-        in the body of the clause.
+        Returns a list where [0] is the name of the literal and [1] is a list
+        of variables in the rule.
            ['father', ['harrypotter', 'jamespotter']]
         """
         predicate_list = predicate_string.replace(' ', '').split(')', 1)[0].split('(')
