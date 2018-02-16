@@ -4,7 +4,7 @@ A prototype Python package for inferring datatypes and converting them into a re
 
 | License | Release | Build Status | Codecov |
 | :---: | :---: | :---: | :---: |
-| [![][license img]][license] | | | |
+| [![][license img]][license] | [![][release img]][release] | | |
 
 ## Getting Started
 
@@ -85,3 +85,6 @@ We use [SemVer](http://semver.org/) for versioning. See [Releases](https://githu
 
 [license]:LICENSE
 [license img]:https://img.shields.io/github/license/batflyer/Mode-Inference.svg
+
+[release]:https://github.com/batflyer/Mode-Inference/releases
+[release img]:https://img.shields.io/github/tag/batflyer/Mode-Inference.svg
