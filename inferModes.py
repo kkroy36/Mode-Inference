@@ -28,6 +28,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
 
 from __future__ import print_function
+from builtins import object
 from collections import Counter
 import argparse
 import re
@@ -60,7 +61,7 @@ def inspect_instance_syntax(example):
     if not _instance_re.search(example):
         raise Exception('Error when checking ground instances; incorrect syntax: ' + example)
     
-class SetupArguments:
+class SetupArguments(object):
     """
     @batflyer: I am maintaining these as classes in the event that this reaches a point where I convert it into a package.
     """
@@ -77,6 +78,10 @@ class SetupArguments:
 
 class InferenceUtils:
 
+    def __init__(self):
+        pass
+
+    @staticmethod
     def parse(predicate_string):
         """
         Input a string of the format:
