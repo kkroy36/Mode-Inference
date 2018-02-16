@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
 from __future__ import print_function
 from collections import Counter
 import argparse
+import re
 
 __author__ = "Alexander L. Hayes (@batflyer)"
 __copyright__ = "Copyright 2018, Alexander L. Hayes"
@@ -41,6 +42,24 @@ __maintainer__ = "Alexander L. Hayes (@batflyer)"
 __email__ = "alexander@batflyer.net"
 __status__ = "Prototype"
 
+# A regular expression which verifies whether or not modes are formatted properly.
+
+_instance_re = re.compile(r'[a-zA-Z0-9]*\(([a-zA-Z0-9]*,( )*)*[a-zA-Z0-9]*\)\.')
+
+def inspect_instance_syntax(example):
+    """
+    Uses a regular expression to check whether or not a mode is formatted correctly.
+    Example:
+        friends(Alice, Bob).   :::   pass
+        friends(Bob, Alice).   :::   pass
+        smokes(Bob).           :::   pass
+        
+        useStdLogicVariables   :::   fail
+        friends).              :::   fail
+    """
+    if not _instance_re.search(example):
+        raise(Exception('Error when checking ground instances; incorrect syntax: ' + example))
+
 class SetupArguments:
     """
     @batflyer: I am maintaining these as classes in the event that this reaches a point where I convert it into a package.
@@ -48,7 +67,7 @@ class SetupArguments:
 
     def __init__(self, verbose=False, positive=None, negative=None, facts=None):
     
-        parser = argparse.ArgumentParser(description='Minimizing positives, negatives, and facts, and performing mode inference', epilog="Copyright 2018 Alexander L. Hayes. MIT License. A full copy of the license is available at the head of the source. The text can also be found online <https://opensource.org/licenses/MIT>.")
+        parser = argparse.ArgumentParser(description='Minimizing positives, negatives, and facts, and performing mode inference', epilog="Copyright 2018 Alexander L. Hayes. BSD 2-Clause. A full copy of the license is available at the head of the source. The text can also be found online <https://opensource.org/licenses/BSD-2-Clause>.")
         parser.add_argument("-v", "--verbose", help="Increase verbosity to help with debugging.", default=verbose, action="store_true")
         parser.add_argument("-pos", "--positive", help="Path to positive examples.", type=str, default=positive)
         parser.add_argument("-neg", "--negative", help="Path to negative examples.", type=str, default=negative)
@@ -142,6 +161,7 @@ class Data:
         of variables in the rule.
            ['father', ['harrypotter', 'jamespotter']]
         """
+        inspect_instance_syntax(predicate_string)
         predicate_list = predicate_string.replace(' ', '').split(')', 1)[0].split('(')
         predicate_list[1] = predicate_list[1].split(',')
         return predicate_list
