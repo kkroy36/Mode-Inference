@@ -1,5 +1,5 @@
-"""inferModes.py: A Python package for inferring modes from a dataset.
-                  Possibly for converting documents to a minimized form.
+"""inferModes.py: A prototype Python package for minimizing the size of datasets,
+                  inferring datatypes, and converting them into a relational schema.
 
 BSD 2-Clause License
 
@@ -37,7 +37,7 @@ __copyright__ = "Copyright 2018, Alexander L. Hayes"
 __credits__ = ["Alexander L. Hayes", "Kaushik Roy", "Sriraam Natarajan"]
 
 __license__ = "BSD 2-Clause"
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 __maintainer__ = "Alexander L. Hayes (@batflyer)"
 __email__ = "alexander@batflyer.net"
 __status__ = "Prototype"
@@ -58,8 +58,8 @@ def inspect_instance_syntax(example):
         friends).              :::   fail
     """
     if not _instance_re.search(example):
-        raise(Exception('Error when checking ground instances; incorrect syntax: ' + example))
-
+        raise Exception('Error when checking ground instances; incorrect syntax: ' + example)
+    
 class SetupArguments:
     """
     @batflyer: I am maintaining these as classes in the event that this reaches a point where I convert it into a package.
@@ -75,6 +75,22 @@ class SetupArguments:
         
         self.args = parser.parse_args()
 
+class InferenceUtils:
+
+    def parse(predicate_string):
+        """
+        Input a string of the format:
+           'father(harrypotter,jamespotter).'
+        Ensures syntax is correct, then returns a list where [0] is the name of the literal
+        and [1] is a list of variables in the rule.
+           ['father', ['harrypotter', 'jamespotter']]
+        """
+        inspect_instance_syntax(predicate_string)
+        
+        predicate_list = predicate_string.replace(' ', '').split(')', 1)[0].split('(')
+        predicate_list[1] = predicate_list[1].split(',')
+        return predicate_list
+        
 class Data:
 
     def __init__(self, positive, negative, facts):
@@ -157,11 +173,12 @@ class Data:
         """
         Input a string of the format:
            'father(harrypotter,jamespotter).'
-        Returns a list where [0] is the name of the literal and [1] is a list
-        of variables in the rule.
+        Ensures syntax is correct, then returns a list where [0] is the name of the literal
+        and [1] is a list of variables in the rule.
            ['father', ['harrypotter', 'jamespotter']]
         """
         inspect_instance_syntax(predicate_string)
+        
         predicate_list = predicate_string.replace(' ', '').split(')', 1)[0].split('(')
         predicate_list[1] = predicate_list[1].split(',')
         return predicate_list
