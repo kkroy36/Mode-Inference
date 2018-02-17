@@ -27,10 +27,14 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
 
+
+
 from __future__ import print_function
 from collections import Counter
 import argparse
 import re
+
+
 
 __author__ = "Alexander L. Hayes (@batflyer)"
 __copyright__ = "Copyright 2018, Alexander L. Hayes"
@@ -42,24 +46,13 @@ __maintainer__ = "Alexander L. Hayes (@batflyer)"
 __email__ = "alexander@batflyer.net"
 __status__ = "Prototype"
 
-# A regular expression which verifies whether or not modes are formatted properly.
 
+
+# A regular expression which verifies whether or not modes are formatted properly.
 _instance_re = re.compile(r'[a-zA-Z0-9]*\(([a-zA-Z0-9]*,( )*)*[a-zA-Z0-9]*\)\.')
 
-def inspect_instance_syntax(example):
-    """
-    Uses a regular expression to check whether or not a mode is formatted correctly.
-    Example:
-        friends(Alice, Bob).   :::   pass
-        friends(Bob, Alice).   :::   pass
-        smokes(Bob).           :::   pass
-        
-        useStdLogicVariables   :::   fail
-        friends).              :::   fail
-    """
-    if not _instance_re.search(example):
-        raise Exception('Error when checking ground instances; incorrect syntax: ' + example)
-    
+
+
 class SetupArguments:
     """
     @batflyer: I am maintaining these as classes in the event that this reaches a point where I convert it into a package.
@@ -75,10 +68,27 @@ class SetupArguments:
         
         self.args = parser.parse_args()
 
+
+        
 class InferenceUtils:
 
     def __init__(self):
         pass
+
+    @staticmethod
+    def inspect_instance_syntax(example):
+        """
+        Uses a regular expression to check whether or not a mode is formatted correctly.
+          Example:
+             friends(Alice, Bob).   :::   pass
+             friends(Bob, Alice).   :::   pass
+             smokes(Bob).           :::   pass
+        
+             useStdLogicVariables   :::   fail
+             friends).              :::   fail
+        """
+        if not _instance_re.search(example):
+            raise Exception('Error when checking ground instances; incorrect syntax: ' + example)
 
     @staticmethod
     def parse(predicate_string):
@@ -89,7 +99,7 @@ class InferenceUtils:
         and [1] is a list of variables in the rule.
            ['father', ['harrypotter', 'jamespotter']]
         """
-        inspect_instance_syntax(predicate_string)
+        InferenceUtils.inspect_instance_syntax(predicate_string)
         
         predicate_list = predicate_string.replace(' ', '').split(')', 1)[0].split('(')
         predicate_list[1] = predicate_list[1].split(',')
@@ -107,110 +117,110 @@ class InferenceUtils:
             return data
         except:
             raise Exception('Could not open file, no such file or directory.')
-        
-class Data:
 
-    def __init__(self, positive, negative, facts):
-        self.pos_data = [InferenceUtils.parse(data) for data in InferenceUtils.read(positive)]
-        self.neg_data = [InferenceUtils.parse(data) for data in InferenceUtils.read(negative)]
-        self.fac_data = [InferenceUtils.parse(data) for data in InferenceUtils.read(facts)]
-
-        self.predicate_head_index = self.build_head_index()
-        self.predicate_body_index = self.build_body_index()
-
+    @staticmethod
+    def ground_predicate_strings_to_ground_predicate_lists(list_of_strings):
         """
-        @batflyer: Now that I've built the inverted indexes, I can rebuild the predicates to use the number system.
+        Convert a list of strings into a list of lists.
+        
+        For example:
+             ['f(a1,a2).', 'f(a2,a3).', ...] ==> [['f', ['a1', 'a2']], ['f', ['a2', 'a3']]]
+        """
+        return list(map(InferenceUtils.parse, list_of_strings))
+
+    @staticmethod
+    def sort_keys(pos, neg, fac):
+        """
+        pos: a list of lists representing positive literals.
+        neg: a list of lists representing negative literals.
+        fac: a list of lists representing facts.
+
+        Counts the number of occurances of each item in the head and body of the ground predicates.
+        
+        Returns two dictionaries:
+        1. predicate_head_index: 
+        2. predicate_body_index: 
         """
 
-        # For illustrative purposes.
-        updated_pos = self.format_lister(self.pos_data)
-        updated_neg = self.format_lister(self.neg_data)
-        updated_fac = self.format_lister(self.fac_data)
+        # Count each grounding in the head and body.
+        def invert_keys():
+            head_cnt = Counter()
+            body_cnt = Counter()
+            
+            for data in pos + neg + fac:
+                head_cnt[data[0]] += 1
+                for i in data[1]:
+                    body_cnt[i] += 1
 
-        print('Pos Before:', self.pos_data)
-        print('Pos:', updated_pos)
-        print('Neg:', updated_neg)
-        print('Facts:', updated_fac)
+            # Invert the counts: that which is most common gets the lowest number.
+            head_cnt_srt = sorted(head_cnt, key=head_cnt.get, reverse=True)
+            body_cnt_srt = sorted(body_cnt, key=body_cnt.get, reverse=True)
 
-        # How many predicates do we have?
-        print(len(self.predicate_head_index))
+            clause_head = {}
+            clause_body = {}
 
-        # How many objects do we have?
-        print(len(self.predicate_body_index))
+            # Turn this order into a dictionary so we can query it later.
+            for i in range(len(head_cnt)):
+                clause_head[head_cnt_srt[i]] = i
+            for i in range(len(body_cnt)):
+                clause_body[body_cnt_srt[i]] = i
+            return clause_head, clause_body
 
-        # Head Set:
-        # 
-        
-    def build_sets(self, dataset):
+        predicate_head_index, predicate_body_index = invert_keys()
+        return predicate_head_index, predicate_body_index
+
+    @staticmethod
+    def compress_ground_predicates(dataset, predicate_head_index, predicate_body_index):
         """
-        
+        Compress the clauses into a list that can be written to a file.
         """
-        # Start from the largest set with an unknown type, pick unused variable ['A', 'B', ...]:
-        # for each set:
-        #     If intersection: type of set2 -> type of set1
-        #     Else: continue
-        
-        pass
-        
-
-    def format_printer(self, dataset):
-        for data in dataset:
-            print(str(self.predicate_head_index[data[0]]) + ',', end='')
-            for b in range(len(data[1])):
-                if b == (len(data[1]) - 1):
-                    print(self.predicate_body_index[data[1][b]])
-                else:
-                    print(self.predicate_body_index[data[1][b]], end=',')
-
-    def format_lister(self, dataset):
-        predicate_list = []
+        ground_predicate_list = []
         for data in dataset:
             new_predicate = ''
-            new_predicate += str(self.predicate_head_index[data[0]]) + ','
+            new_predicate += str(predicate_head_index[data[0]]) + ','
             for b in range(len(data[1])):
                 if b == (len(data[1]) - 1):
-                    new_predicate += str(self.predicate_body_index[data[1][b]])
+                    new_predicate += str(predicate_body_index[data[1][b]])
                 else:
-                    new_predicate += str(self.predicate_body_index[data[1][b]]) + ','
-            predicate_list.append(new_predicate)
-        return predicate_list
+                    new_predicate += str(predicate_body_index[data[1][b]]) + ','
+            ground_predicate_list.append(new_predicate)
+        return ground_predicate_list
+    
+def compress_clauses(pos, neg, fac):
 
-    def build_head_index(self):
-        head_cnt = Counter()
-        for data in self.pos_data + self.neg_data + self.fac_data:
-            head_cnt[data[0]] += 1
-        head_cnt_srt = sorted(head_cnt, key=head_cnt.get, reverse=True)
-        index = {}
-        for i in range(len(head_cnt)):
-            index[head_cnt_srt[i]] = i
-        return index
-
-    def build_body_index(self):
-        body_cnt = Counter()
-        for data in self.pos_data + self.neg_data + self.fac_data:
-            for i in data[1]:
-                body_cnt[i] += 1
-        body_cnt_srt = sorted(body_cnt, key=body_cnt.get, reverse=True)
-        index = {}
-        for i in range(len(body_cnt)):
-            index[body_cnt_srt[i]] = i
-        return index
-
-class Modes:
     """
-    Perform mode inference.
+    positive: a list of strings representing positive literals.
+    negative: a list of strings representing negative literals.
+    facts: a list of strings representing facts.
     """
 
-    def __init__(self):
-        pass
+    predicate_head_index, predicate_body_index = InferenceUtils.sort_keys(pos, neg, fac)
+    
+    new_pos = InferenceUtils.compress_ground_predicates(pos, predicate_head_index, predicate_body_index)
+    new_neg = InferenceUtils.compress_ground_predicates(neg, predicate_head_index, predicate_body_index)
+    new_fac = InferenceUtils.compress_ground_predicates(fac, predicate_head_index, predicate_body_index)
 
-def Abstractify():
-    pass
+    return new_pos, new_neg, new_fac
 
 def __main():
+
+    # Read the arguments from the commandline.
     args = SetupArguments().args
-    d = Data(args.positive, args.negative, args.facts)
-    #print(d.fac_data)
+    
+    # Use the 'read' utility to read positives, negatives, and facts.
+    pos = InferenceUtils.read(args.positive)
+    neg = InferenceUtils.read(args.negative)
+    fac = InferenceUtils.read(args.facts)
+
+    # Use the 'ground_predicate_strings_to_ground_predicate_lists' utility to convert them.
+    pos = InferenceUtils.ground_predicate_strings_to_ground_predicate_lists(pos)
+    neg = InferenceUtils.ground_predicate_strings_to_ground_predicate_lists(neg)
+    fac = InferenceUtils.ground_predicate_strings_to_ground_predicate_lists(fac)
+
+    pos, neg, fac = compress_clauses(pos, neg, fac)
+    print('Pos', pos)
+    print('Neg', neg)
+    print('Fac', fac)
     
 if __name__ == '__main__':
     __main()
