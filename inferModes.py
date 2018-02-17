@@ -216,6 +216,10 @@ def __main():
     pos = InferenceUtils.ground_predicate_strings_to_ground_predicate_lists(pos)
     neg = InferenceUtils.ground_predicate_strings_to_ground_predicate_lists(neg)
     fac = InferenceUtils.ground_predicate_strings_to_ground_predicate_lists(fac)
+    
+    print('Pos before compression', pos)
+    print('Neg before compression', neg)
+    print('Fac before compression', fac)
 
     pos, neg, fac = compress_clauses(pos, neg, fac)
     print('Pos', pos)
