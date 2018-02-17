@@ -4,14 +4,14 @@ A prototype Python package for inferring datatypes and converting them into a re
 
 | License | Release | Build Status | Codecov |
 | :---: | :---: | :---: | :---: |
-| [![][license img]][license] | [![][release img]][release] | | |
+| [![][license img]][license] | [![][release img]][release] | [![Build Status](https://travis-ci.org/batflyer/Mode-Inference.svg?branch=master)](https://travis-ci.org/batflyer/Mode-Inference) | [![][codecov img]][codecov link] |
 
 ## Getting Started
 
 **Prerequisites**
 
-* Python (3.6)
-  * `collections`, `argparse`: these should already be installed if you're using Anaconda.
+* Python (2.7, 3.3, 3.4, 3.5, 3.6)
+  * `collections`, `argparse`, `re`: these should usually be installed already.
   
 **Installation**
 
@@ -88,3 +88,6 @@ We use [SemVer](http://semver.org/) for versioning. See [Releases](https://githu
 
 [release]:https://github.com/batflyer/Mode-Inference/releases
 [release img]:https://img.shields.io/github/tag/batflyer/Mode-Inference.svg
+
+[codecov img]:https://codecov.io/gh/batflyer/Mode-Inference/branch/master/graphs/badge.svg?branch=master
+[codecov link]:https://codecov.io/gh/batflyer/Mode-Inference?branch=master

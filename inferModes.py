@@ -60,7 +60,7 @@ def inspect_instance_syntax(example):
     if not _instance_re.search(example):
         raise Exception('Error when checking ground instances; incorrect syntax: ' + example)
     
-class SetupArguments(object):
+class SetupArguments:
     """
     @batflyer: I am maintaining these as classes in the event that this reaches a point where I convert it into a package.
     """
@@ -94,13 +94,26 @@ class InferenceUtils:
         predicate_list = predicate_string.replace(' ', '').split(')', 1)[0].split('(')
         predicate_list[1] = predicate_list[1].split(',')
         return predicate_list
+
+    @staticmethod
+    def read(path):
+        """
+        Reads the data from file located at 'path', returns a list of strings where each
+        string contains the information on that particular line.
+        """
+        try:
+            with open(path) as f:
+                data = f.read().splitlines()
+            return data
+        except:
+            raise Exception('Could not open file, no such file or directory.')
         
 class Data:
 
     def __init__(self, positive, negative, facts):
-        self.pos_data = [self.parse(data) for data in self.read(positive)]
-        self.neg_data = [self.parse(data) for data in self.read(negative)]
-        self.fac_data = [self.parse(data) for data in self.read(facts)]
+        self.pos_data = [InferenceUtils.parse(data) for data in InferenceUtils.read(positive)]
+        self.neg_data = [InferenceUtils.parse(data) for data in InferenceUtils.read(negative)]
+        self.fac_data = [InferenceUtils.parse(data) for data in InferenceUtils.read(facts)]
 
         self.predicate_head_index = self.build_head_index()
         self.predicate_body_index = self.build_body_index()
@@ -160,31 +173,6 @@ class Data:
                 else:
                     new_predicate += str(self.predicate_body_index[data[1][b]]) + ','
             predicate_list.append(new_predicate)
-        return predicate_list
-
-    def read(self, path):
-        """
-        Assumes that data are stored on separate lines.
-        """
-        try:
-            with open(path) as f:
-                data = f.read().splitlines()
-            return data
-        except:
-            raise Exception('Could not open file, no such file or directory.')
-
-    def parse(self, predicate_string):
-        """
-        Input a string of the format:
-           'father(harrypotter,jamespotter).'
-        Ensures syntax is correct, then returns a list where [0] is the name of the literal
-        and [1] is a list of variables in the rule.
-           ['father', ['harrypotter', 'jamespotter']]
-        """
-        inspect_instance_syntax(predicate_string)
-        
-        predicate_list = predicate_string.replace(' ', '').split(')', 1)[0].split('(')
-        predicate_list[1] = predicate_list[1].split(',')
         return predicate_list
 
     def build_head_index(self):
