@@ -1,5 +1,5 @@
-"""inferModes.py: A Python package for inferring modes from a dataset.
-                  Possibly for converting documents to a minimized form.
+"""inferModes.py: A prototype Python package for minimizing the size of datasets,
+                  inferring datatypes, and converting them into a relational schema.
 
 BSD 2-Clause License
 
@@ -27,38 +27,31 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."""
 
+
+
 from __future__ import print_function
 from collections import Counter
 import argparse
 import re
+
+
 
 __author__ = "Alexander L. Hayes (@batflyer)"
 __copyright__ = "Copyright 2018, Alexander L. Hayes"
 __credits__ = ["Alexander L. Hayes", "Kaushik Roy", "Sriraam Natarajan"]
 
 __license__ = "BSD 2-Clause"
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 __maintainer__ = "Alexander L. Hayes (@batflyer)"
 __email__ = "alexander@batflyer.net"
 __status__ = "Prototype"
 
-# A regular expression which verifies whether or not modes are formatted properly.
 
+
+# A regular expression which verifies whether or not modes are formatted properly.
 _instance_re = re.compile(r'[a-zA-Z0-9]*\(([a-zA-Z0-9]*,( )*)*[a-zA-Z0-9]*\)\.')
 
-def inspect_instance_syntax(example):
-    """
-    Uses a regular expression to check whether or not a mode is formatted correctly.
-    Example:
-        friends(Alice, Bob).   :::   pass
-        friends(Bob, Alice).   :::   pass
-        smokes(Bob).           :::   pass
-        
-        useStdLogicVariables   :::   fail
-        friends).              :::   fail
-    """
-    if not _instance_re.search(example):
-        raise(Exception('Error when checking ground instances; incorrect syntax: ' + example))
+
 
 class SetupArguments:
     """
@@ -75,76 +68,48 @@ class SetupArguments:
         
         self.args = parser.parse_args()
 
-class Data:
 
-    def __init__(self, positive, negative, facts):
-        self.pos_data = [self.parse(data) for data in self.read(positive)]
-        self.neg_data = [self.parse(data) for data in self.read(negative)]
-        self.fac_data = [self.parse(data) for data in self.read(facts)]
-
-        self.predicate_head_index = self.build_head_index()
-        self.predicate_body_index = self.build_body_index()
-
-        """
-        @batflyer: Now that I've built the inverted indexes, I can rebuild the predicates to use the number system.
-        """
-
-        # For illustrative purposes.
-        updated_pos = self.format_lister(self.pos_data)
-        updated_neg = self.format_lister(self.neg_data)
-        updated_fac = self.format_lister(self.fac_data)
-
-        print('Pos Before:', self.pos_data)
-        print('Pos:', updated_pos)
-        print('Neg:', updated_neg)
-        print('Facts:', updated_fac)
-
-        # How many predicates do we have?
-        print(len(self.predicate_head_index))
-
-        # How many objects do we have?
-        print(len(self.predicate_body_index))
-
-        # Head Set:
-        # 
         
-    def build_sets(self, dataset):
-        """
-        
-        """
-        # Start from the largest set with an unknown type, pick unused variable ['A', 'B', ...]:
-        # for each set:
-        #     If intersection: type of set2 -> type of set1
-        #     Else: continue
-        
+class InferenceUtils:
+
+    def __init__(self):
         pass
+
+    @staticmethod
+    def inspect_instance_syntax(example):
+        """
+        Uses a regular expression to check whether or not a mode is formatted correctly.
+          Example:
+             friends(Alice, Bob).   :::   pass
+             friends(Bob, Alice).   :::   pass
+             smokes(Bob).           :::   pass
         
+             useStdLogicVariables   :::   fail
+             friends).              :::   fail
+        """
+        if not _instance_re.search(example):
+            raise Exception('Error when checking ground instances; incorrect syntax: ' + example)
 
-    def format_printer(self, dataset):
-        for data in dataset:
-            print(str(self.predicate_head_index[data[0]]) + ',', end='')
-            for b in range(len(data[1])):
-                if b == (len(data[1]) - 1):
-                    print(self.predicate_body_index[data[1][b]])
-                else:
-                    print(self.predicate_body_index[data[1][b]], end=',')
-
-    def format_lister(self, dataset):
-        predicate_list = []
-        for data in dataset:
-            new_predicate = ''
-            new_predicate += str(self.predicate_head_index[data[0]]) + ','
-            for b in range(len(data[1])):
-                if b == (len(data[1]) - 1):
-                    new_predicate += str(self.predicate_body_index[data[1][b]])
-                else:
-                    new_predicate += str(self.predicate_body_index[data[1][b]]) + ','
-            predicate_list.append(new_predicate)
+    @staticmethod
+    def parse(predicate_string):
+        """
+        Input a string of the format:
+           'father(harrypotter,jamespotter).'
+        Ensures syntax is correct, then returns a list where [0] is the name of the literal
+        and [1] is a list of variables in the rule.
+           ['father', ['harrypotter', 'jamespotter']]
+        """
+        InferenceUtils.inspect_instance_syntax(predicate_string)
+        
+        predicate_list = predicate_string.replace(' ', '').split(')', 1)[0].split('(')
+        predicate_list[1] = predicate_list[1].split(',')
         return predicate_list
 
-    def read(self, path):
+    @staticmethod
+    def read(path):
         """
-        Assumes that data are stored on separate lines.
+        Reads the data from file located at 'path', returns a list of strings where each
+        string contains the information on that particular line.
         """
         try:
             with open(path) as f:
@@ -153,55 +118,109 @@ class Data:
         except:
             raise Exception('Could not open file, no such file or directory.')
 
-    def parse(self, predicate_string):
+    @staticmethod
+    def ground_predicate_strings_to_ground_predicate_lists(list_of_strings):
         """
-        Input a string of the format:
-           'father(harrypotter,jamespotter).'
-        Returns a list where [0] is the name of the literal and [1] is a list
-        of variables in the rule.
-           ['father', ['harrypotter', 'jamespotter']]
+        Convert a list of strings into a list of lists.
+        
+        For example:
+             ['f(a1,a2).', 'f(a2,a3).', ...] ==> [['f', ['a1', 'a2']], ['f', ['a2', 'a3']]]
         """
-        inspect_instance_syntax(predicate_string)
-        predicate_list = predicate_string.replace(' ', '').split(')', 1)[0].split('(')
-        predicate_list[1] = predicate_list[1].split(',')
-        return predicate_list
+        return list(map(InferenceUtils.parse, list_of_strings))
 
-    def build_head_index(self):
-        head_cnt = Counter()
-        for data in self.pos_data + self.neg_data + self.fac_data:
-            head_cnt[data[0]] += 1
-        head_cnt_srt = sorted(head_cnt, key=head_cnt.get, reverse=True)
-        index = {}
-        for i in range(len(head_cnt)):
-            index[head_cnt_srt[i]] = i
-        return index
+    @staticmethod
+    def sort_keys(pos, neg, fac):
+        """
+        pos: a list of lists representing positive literals.
+        neg: a list of lists representing negative literals.
+        fac: a list of lists representing facts.
 
-    def build_body_index(self):
-        body_cnt = Counter()
-        for data in self.pos_data + self.neg_data + self.fac_data:
-            for i in data[1]:
-                body_cnt[i] += 1
-        body_cnt_srt = sorted(body_cnt, key=body_cnt.get, reverse=True)
-        index = {}
-        for i in range(len(body_cnt)):
-            index[body_cnt_srt[i]] = i
-        return index
+        Counts the number of occurances of each item in the head and body of the ground predicates.
+        
+        Returns two dictionaries:
+        1. predicate_head_index: 
+        2. predicate_body_index: 
+        """
 
-class Modes:
+        # Count each grounding in the head and body.
+        def invert_keys():
+            head_cnt = Counter()
+            body_cnt = Counter()
+            
+            for data in pos + neg + fac:
+                head_cnt[data[0]] += 1
+                for i in data[1]:
+                    body_cnt[i] += 1
+
+            # Invert the counts: that which is most common gets the lowest number.
+            head_cnt_srt = sorted(head_cnt, key=head_cnt.get, reverse=True)
+            body_cnt_srt = sorted(body_cnt, key=body_cnt.get, reverse=True)
+
+            clause_head = {}
+            clause_body = {}
+
+            # Turn this order into a dictionary so we can query it later.
+            for i in range(len(head_cnt)):
+                clause_head[head_cnt_srt[i]] = i
+            for i in range(len(body_cnt)):
+                clause_body[body_cnt_srt[i]] = i
+            return clause_head, clause_body
+
+        predicate_head_index, predicate_body_index = invert_keys()
+        return predicate_head_index, predicate_body_index
+
+    @staticmethod
+    def compress_ground_predicates(dataset, predicate_head_index, predicate_body_index):
+        """
+        Compress the clauses into a list that can be written to a file.
+        """
+        ground_predicate_list = []
+        for data in dataset:
+            new_predicate = ''
+            new_predicate += str(predicate_head_index[data[0]]) + ','
+            for b in range(len(data[1])):
+                if b == (len(data[1]) - 1):
+                    new_predicate += str(predicate_body_index[data[1][b]])
+                else:
+                    new_predicate += str(predicate_body_index[data[1][b]]) + ','
+            ground_predicate_list.append(new_predicate)
+        return ground_predicate_list
+    
+def compress_clauses(pos, neg, fac):
+
     """
-    Perform mode inference.
+    positive: a list of strings representing positive literals.
+    negative: a list of strings representing negative literals.
+    facts: a list of strings representing facts.
     """
 
-    def __init__(self):
-        pass
+    predicate_head_index, predicate_body_index = InferenceUtils.sort_keys(pos, neg, fac)
+    
+    new_pos = InferenceUtils.compress_ground_predicates(pos, predicate_head_index, predicate_body_index)
+    new_neg = InferenceUtils.compress_ground_predicates(neg, predicate_head_index, predicate_body_index)
+    new_fac = InferenceUtils.compress_ground_predicates(fac, predicate_head_index, predicate_body_index)
 
-def Abstractify():
-    pass
+    return new_pos, new_neg, new_fac
 
 def __main():
+
+    # Read the arguments from the commandline.
     args = SetupArguments().args
-    d = Data(args.positive, args.negative, args.facts)
-    #print(d.fac_data)
+    
+    # Use the 'read' utility to read positives, negatives, and facts.
+    pos = InferenceUtils.read(args.positive)
+    neg = InferenceUtils.read(args.negative)
+    fac = InferenceUtils.read(args.facts)
+
+    # Use the 'ground_predicate_strings_to_ground_predicate_lists' utility to convert them.
+    pos = InferenceUtils.ground_predicate_strings_to_ground_predicate_lists(pos)
+    neg = InferenceUtils.ground_predicate_strings_to_ground_predicate_lists(neg)
+    fac = InferenceUtils.ground_predicate_strings_to_ground_predicate_lists(fac)
+
+    pos, neg, fac = compress_clauses(pos, neg, fac)
+    print('Pos', pos)
+    print('Neg', neg)
+    print('Fac', fac)
     
 if __name__ == '__main__':
     __main()
